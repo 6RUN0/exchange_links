@@ -48,7 +48,7 @@ function exchange_links_add_block_form_validate($form, $form_state) {
  * @see exchange_links_add_block_form()
  */
 
-function exchange_links_add_block_form_submit($form, $form_state) {
+function exchange_links_add_block_form_submit($form, &$form_state) {
   //dpm($form_state['values']);
   if($form_state['clicked_button']['#name'] == 'save') {
     $block_id = db_insert('exchange_links_blocks')
@@ -61,6 +61,7 @@ function exchange_links_add_block_form_submit($form, $form_state) {
       ->execute();
     $delta = exchange_links_delta($block_id);
     drupal_set_message(t('The block has been created.'));
+    cache_clear_all();
     $form_state['redirect'] = "admin/structure/block/manage/exchange_links/$delta/configure";
   }
 }
