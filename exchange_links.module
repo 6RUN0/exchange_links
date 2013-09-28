@@ -22,6 +22,15 @@ function exchange_links_menu() {
     'type' => MENU_LOCAL_ACTION,
     'file' => 'exchange_links.admin.inc',
   );
+  /*$items['admin/structure/block/manage/%/%/delete_ccc'] = array(
+    'title' => 'Delete block',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('exchange_links_del_block_form', 5),
+    'access arguments' => array('administer blocks'),
+    'type' => MENU_LOCAL_TASK,
+    'context' => MENU_CONTEXT_NONE,
+    'file' => 'exchange_links.admin.inc',
+  );*/
   return $items;
 }
 

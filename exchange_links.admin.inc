@@ -64,3 +64,8 @@ function exchange_links_add_block_form_submit($form, $form_state) {
     $form_state['redirect'] = "admin/structure/block/manage/exchange_links/$delta/configure";
   }
 }
+
+function exchange_links_del_block_form($form, &$form_state, $delta) {
+  $form = array();
+  return $form;
+}

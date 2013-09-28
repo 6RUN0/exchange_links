@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Implements hook_form_alter()
  * @see exchange_links_hook_info_alter()
@@ -7,7 +8,8 @@ function exchange_links_form_alter($form, $form_state) {
 }
 
 /**
- *  Implements hook_form_FORM_ID_alter()
+ * Implements hook_form_FORM_ID_alter()
+ * place form admin/structure/block/manage/%/%/configure
  */
 function exchange_links_form_block_admin_configure_alter(&$form, $form_state) {
   if ($form['module']['#value'] == 'exchange_links') {
@@ -18,6 +20,15 @@ function exchange_links_form_block_admin_configure_alter(&$form, $form_state) {
       '#submit' => array('exchange_links_delete_submit'),
     );
   }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter()
+ * place form admin/structure/block
+ */
+function exchange_links_form_block_admin_display_form_alter(&$form, $form_state) {
+  dpm($form);
+  dpm($form_state);
 }
 
 function exchange_links_delete_submit($form, $form_state) {
