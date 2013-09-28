@@ -1,0 +1,168 @@
+<?php
+
+/**
+ * Support services.
+ */
+define('EXCHANGE_LINKS_SAPE', 'sape');
+define('EXCHANGE_LINKS_MAINLINK', 'mainlink');
+define('EXCHANGE_LINKS_LINKFEED', 'linkfeed');
+define('EXCHANGE_LINKS_SETLINK', 'setlinks');
+
+define('EXCHANGE_LINKS_INFO_PREFIX', 'exchange_links_');
+
+/**
+ * Implements hook_menu()
+ */
+function exchange_links_menu() {
+  $items['admin/structure/block/exchange_links_add'] = array(
+    'title' => t('Add block exchange links'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('exchange_links_add_block_form'),
+    'access arguments' => array('administer blocks'),
+    'type' => MENU_LOCAL_ACTION,
+    'file' => 'exchange_links.admin.inc',
+  );
+  /*
+  $items['admin/structure/block/manage/%/%/configure'] = array(
+    'title' => 'Configure block',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'context' => MENU_CONTEXT_INLINE,
+  );
+  $items['admin/structure/block/manage/%/%/delete'] = array(
+    'title' => t('Delete block'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('exchange_links_delete_block_form', 5),
+    'access arguments' => array('administer blocks'),
+    'type' => MENU_LOCAL_TASK,
+    'context' => MENU_CONTEXT_NONE,
+    'file' => 'exchange_links.admin.inc',
+  );*/
+  return $items;
+}
+
+/**
+ * Implements hook_menu()
+ */
+function exchange_links_menu_alter(&$items) {
+  dpm($items);
+}
+
+/**
+ * Implements hook_block_configure().
+ */
+function exchange_links_block_configure($delta = '') {
+
+  $form['exchange_links_service'] = array(
+    '#type' => 'select',
+    '#required' => TRUE,
+    '#title' => t('Select service'),
+    '#options' => exchange_links_services(),
+    //'#description' => t(''),
+  );
+  $form['exchange_links_user'] = array(
+    '#type' => 'textfield',
+    '#required' => TRUE,
+    '#title' => t('User'),
+    //'#description' => t(''),
+  );
+  $form['exchange_links_debug'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Debug'),
+    '#default_value' => FALSE,
+    //'#description' => t(''),
+  );
+  $form['exchange_links_show_code'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show code'),
+    '#default_value' => FALSE,
+    //'#description' => t(''),
+  );
+  // $block_id is {exchange_links_blocks}.bid
+  $block_id = exchange_links_bid($delta);
+  if($block_id != 0) {
+    $block = db_select('exchange_links_blocks', 'blocks')
+    ->fields('blocks')
+    ->condition('bid', $block_id, '=')
+    ->execute()
+    ->fetchObject();
+    $form['exchange_links_service']['#default_value'] = $block->service;
+    $form['exchange_links_user']['#default_value'] = $block->user;
+    $form['exchange_links_debug']['#default_value'] = $block->debug;
+    $form['exchange_links_show_code'] ['#default_value'] = $block->show_code;
+  }
+  return $form;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function exchange_links_block_view($delta = '') {
+  $data = array();
+  $block_id = exchange_links_bid($delta);
+  if($block_id != 0) {
+    $block = db_select('exchange_links_blocks', 'blocks')
+    ->fields('blocks')
+    ->condition('bid', $block_id, '=')
+    ->execute()
+    ->fetchObject();
+    $data['subject'] = NULL;
+    $data['content'] = "Service $block->service </ br>
+      User $block->user </ br>
+      Debug $block->debug </ br>
+      Show code $block->show_code </ br>";
+  }
+  return $data;
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function exchange_links_block_info() {
+  $blocks = array();
+  $result = db_select('exchange_links_blocks', 'blocks')
+    ->fields('blocks')
+    ->execute();
+  while($record = $result->fetchObject()) {
+    $delta = exchange_links_delta($record->bid);
+    $blocks[$delta]['info'] = "$record->service $record->user";
+    $blocks[$delta]['cache'] = DRUPAL_NO_CACHE;
+  }
+  return $blocks;
+}
+
+/**
+ * The list of supported services
+ * @return accociative array of services
+ *   array('machin_name_of_services' => 'human_name_of_services')
+ */
+function exchange_links_services() {
+  $support_services = array(
+    EXCHANGE_LINKS_SAPE => 'Sape',
+    EXCHANGE_LINKS_MAINLINK => 'MainLink',
+    EXCHANGE_LINKS_LINKFEED => 'LinkFeed',
+    EXCHANGE_LINKS_SETLINK => 'SetLinks',
+  );
+  return $support_services;
+}
+
+//function template_preprocess_block_admin_display_form(&$variables) {
+//  dpm($variables);
+//}
+
+/**
+ * Get {block}.delta by {exchange_links_blocks}.bid
+ * @param int {exchange_links_blocks}.bid 
+ * @return str {block}.delta
+ */
+function exchange_links_delta($bid) {
+  return EXCHANGE_LINKS_INFO_PREFIX . $bid;
+}
+
+/**
+ * Get {exchange_links_blocks}.bid by {block}.delta 
+ * @param str {block}.delta
+ * @return int {exchange_links_blocks}.bid 
+ */
+function exchange_links_bid($delta) {
+  return (int) str_replace(EXCHANGE_LINKS_INFO_PREFIX, '', $delta);
+}
