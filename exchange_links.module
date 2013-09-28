@@ -22,29 +22,14 @@ function exchange_links_menu() {
     'type' => MENU_LOCAL_ACTION,
     'file' => 'exchange_links.admin.inc',
   );
-  /*
-  $items['admin/structure/block/manage/%/%/configure'] = array(
-    'title' => 'Configure block',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'context' => MENU_CONTEXT_INLINE,
-  );
-  $items['admin/structure/block/manage/%/%/delete'] = array(
-    'title' => t('Delete block'),
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('exchange_links_delete_block_form', 5),
-    'access arguments' => array('administer blocks'),
-    'type' => MENU_LOCAL_TASK,
-    'context' => MENU_CONTEXT_NONE,
-    'file' => 'exchange_links.admin.inc',
-  );*/
   return $items;
 }
 
 /**
- * Implements hook_menu()
+ * Implements hook_hook_info_alter()
  */
-function exchange_links_menu_alter(&$items) {
-  dpm($items);
+function exchange_links_hook_info_alter() {
+  $hooks['form_alter']['group'] = 'form';
 }
 
 /**
@@ -81,16 +66,34 @@ function exchange_links_block_configure($delta = '') {
   $block_id = exchange_links_bid($delta);
   if($block_id != 0) {
     $block = db_select('exchange_links_blocks', 'blocks')
-    ->fields('blocks')
-    ->condition('bid', $block_id, '=')
-    ->execute()
-    ->fetchObject();
+      ->fields('blocks')
+      ->condition('bid', $block_id, '=')
+      ->execute()
+      ->fetchObject();
     $form['exchange_links_service']['#default_value'] = $block->service;
     $form['exchange_links_user']['#default_value'] = $block->user;
     $form['exchange_links_debug']['#default_value'] = $block->debug;
     $form['exchange_links_show_code'] ['#default_value'] = $block->show_code;
   }
   return $form;
+}
+
+/**
+ * Implements hook_block_save().
+ */
+function exchange_links_block_save($delta = '', $edit = array()) {
+  $block_id = exchange_links_bid($delta);
+  if($block_id != 0 && !empty($edit)) {
+    $query = db_merge('exchange_links_blocks')
+      ->key(array('bid' => $block_id))
+      ->fields(array(
+        'service' => $edit['exchange_links_service'],
+        'user' => $edit['exchange_links_user'],
+        'debug' => $edit['exchange_links_debug'],
+        'show_code' => $edit['exchange_links_show_code'],
+      ))
+      ->execute();
+  }
 }
 
 /**
@@ -124,7 +127,13 @@ function exchange_links_block_info() {
     ->execute();
   while($record = $result->fetchObject()) {
     $delta = exchange_links_delta($record->bid);
-    $blocks[$delta]['info'] = "$record->service $record->user";
+    $info = "$record->service: $record->user";
+    if (drupal_strlen($info) > 30) {
+       $blocks[$delta]['info'] = drupal_substr($info, 0, 25) . '...';
+    }
+    else {
+      $blocks[$delta]['info'] = $info;
+    }
     $blocks[$delta]['cache'] = DRUPAL_NO_CACHE;
   }
   return $blocks;
@@ -145,13 +154,9 @@ function exchange_links_services() {
   return $support_services;
 }
 
-//function template_preprocess_block_admin_display_form(&$variables) {
-//  dpm($variables);
-//}
-
 /**
  * Get {block}.delta by {exchange_links_blocks}.bid
- * @param int {exchange_links_blocks}.bid 
+ * @param int {exchange_links_blocks}.bid
  * @return str {block}.delta
  */
 function exchange_links_delta($bid) {
@@ -159,9 +164,9 @@ function exchange_links_delta($bid) {
 }
 
 /**
- * Get {exchange_links_blocks}.bid by {block}.delta 
+ * Get {exchange_links_blocks}.bid by {block}.delta
  * @param str {block}.delta
- * @return int {exchange_links_blocks}.bid 
+ * @return int {exchange_links_blocks}.bid
  */
 function exchange_links_bid($delta) {
   return (int) str_replace(EXCHANGE_LINKS_INFO_PREFIX, '', $delta);
