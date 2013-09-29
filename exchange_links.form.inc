@@ -12,14 +12,14 @@ function exchange_links_form_alter($form, $form_state) {
  * place form admin/structure/block
  */
 function exchange_links_form_block_admin_display_form_alter(&$form, $form_state) {
-  $result = db_select('exchange_links_blocks', 'blocks')
-    ->fields('blocks')
-    ->execute();
-  while($record = $result->fetchObject()) {
-    $form['blocks']["exchange_links_$record->bid"]['delete'] = array(
-      '#type' => 'link',
-      '#title' => t('delete'),
-      '#href' => "admin/structure/block/manage/exchange_links/$record->bid/delete",
-    );
+  foreach($form['blocks'] as $key => $block) {
+    if($block['module']['#value'] == 'exchange_links') {
+      $form['blocks'][$key]['delete'] = array(
+        '#type' => 'link',
+        '#title' => t('delete'),
+        '#href' => 'admin/structure/block/manage/exchange_links/' . $block['delta']['#value'] . '/delete',
+      );
+    }
   }
+  //dpm($form);
 }
