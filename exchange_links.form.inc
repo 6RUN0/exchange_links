@@ -9,29 +9,17 @@ function exchange_links_form_alter($form, $form_state) {
 
 /**
  * Implements hook_form_FORM_ID_alter()
- * place form admin/structure/block/manage/%/%/configure
- */
-function exchange_links_form_block_admin_configure_alter(&$form, $form_state) {
-  if ($form['module']['#value'] == 'exchange_links') {
-    $form['actions']['exchange_links_delete'] = array(
-      '#type' => 'submit',
-      '#name' => 'exchange_links_delete',
-      '#value' => t('Delete block'),
-      '#submit' => array('exchange_links_delete_submit'),
-    );
-  }
-}
-
-/**
- * Implements hook_form_FORM_ID_alter()
  * place form admin/structure/block
  */
 function exchange_links_form_block_admin_display_form_alter(&$form, $form_state) {
-  dpm($form);
-  dpm($form_state);
-}
-
-function exchange_links_delete_submit($form, $form_state) {
-  dpm($form);
-  dpm($form_state);
+  $result = db_select('exchange_links_blocks', 'blocks')
+    ->fields('blocks')
+    ->execute();
+  while($record = $result->fetchObject()) {
+    $form['blocks']["exchange_links_$record->bid"]['delete'] = array(
+      '#type' => 'link',
+      '#title' => t('delete'),
+      '#href' => "admin/structure/block/manage/exchange_links/$record->bid/delete",
+    );
+  }
 }
