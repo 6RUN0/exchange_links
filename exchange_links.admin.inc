@@ -6,7 +6,6 @@
  * @see exchange_links_add_block_form_validate()
  * @see exchange_links_add_block_form_submit()
  */
-
 function exchange_links_add_block_form($form, &$form_state) {
   $form = array();
   $form = exchange_links_block_configure();
@@ -24,7 +23,6 @@ function exchange_links_add_block_form($form, &$form_state) {
  * @see exchange_links_add_block_form()
  * @see exchange_links_add_block_form_submit()
  */
-
 function exchange_links_add_block_form_validate($form, $form_state) {
   //dpm($form_state);
   if($form_state['clicked_button']['#name'] == 'save') {
@@ -47,7 +45,6 @@ function exchange_links_add_block_form_validate($form, $form_state) {
  * @see exchange_links_add_block_form_validate()
  * @see exchange_links_add_block_form()
  */
-
 function exchange_links_add_block_form_submit($form, &$form_state) {
   //dpm($form_state['values']);
   if($form_state['clicked_button']['#name'] == 'save') {
@@ -65,7 +62,40 @@ function exchange_links_add_block_form_submit($form, &$form_state) {
   }
 }
 
-function exchange_links_del_block_form($form, &$form_state, $delta) {
+/**
+ * @see exchange_links_del_block_form_submit()
+ */
+function exchange_links_del_block_form($form, $form_state, $delta) {
   $form = array();
-  return $form;
+  $block = exchange_links_block_get($delta);
+  $form['delta'] = array(
+    '#type' => 'value',
+    '#value' => $delta,
+  );
+  $quest = t('Are you sure you want to delete the block of the exchange of links?');
+  $description = t('Service: !service', array('!service' => $block->service));
+  $description .= '<br />';
+  $description .=  t('User: !user', array('!user' => $block->user));
+  return confirm_form($form, $quest, 'admin/structure/block', $description, t('Delete'), t('Cancel'));
+}
+
+/**
+ * @see exchange_links_del_block_form()
+ */
+function exchange_links_del_block_form_submit($form, &$form_state) {
+  db_delete('exchange_links_blocks')
+    ->condition('bid', $form_state['values']['delta'])
+    ->execute();
+  db_delete('block')
+    ->condition('module', 'exchange_links')
+    ->condition('delta', $form_state['values']['delta'])
+    ->execute();
+  db_delete('block_role')
+    ->condition('module', 'exchange_links')
+    ->condition('delta', $form_state['values']['delta'])
+    ->execute();
+  drupal_set_message(t('The block block of the exchange of links has been removed.'));
+  cache_clear_all();
+  $form_state['redirect'] = 'admin/structure/block';
+  return;
 }

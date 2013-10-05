@@ -13,7 +13,7 @@ define('EXCHANGE_LINKS_SETLINK', 'setlinks');
  */
 function exchange_links_menu() {
   $items['admin/structure/block/exchange_links_add'] = array(
-    'title' => t('Add block exchange links'),
+    'title' => 'Add block exchange links',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('exchange_links_add_block_form'),
     'access arguments' => array('administer blocks'),
@@ -21,7 +21,7 @@ function exchange_links_menu() {
     'file' => 'exchange_links.admin.inc',
   );
   $items['admin/structure/block/manage/exchange_links/%/delete'] = array(
-    'title' => t('delete'),
+    'title' => 'delete',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('exchange_links_del_block_form', 5),
     'access arguments' => array('administer blocks'),
@@ -30,13 +30,6 @@ function exchange_links_menu() {
     'file' => 'exchange_links.admin.inc',
   );
   return $items;
-}
-
-/**
- * Implements hook_hook_info_alter()
- */
-function exchange_links_hook_info_alter() {
-  $hooks['form_alter']['group'] = 'form';
 }
 
 /**
@@ -70,11 +63,7 @@ function exchange_links_block_configure($delta = 0) {
     //'#description' => t(''),
   );
   if($delta != 0) {
-    $block = db_select('exchange_links_blocks', 'blocks')
-      ->fields('blocks')
-      ->condition('bid', $delta, '=')
-      ->execute()
-      ->fetchObject();
+    $block = exchange_links_block_get($delta);
     $form['exchange_links_service']['#default_value'] = $block->service;
     $form['exchange_links_user']['#default_value'] = $block->user;
     $form['exchange_links_debug']['#default_value'] = $block->debug;
@@ -106,11 +95,7 @@ function exchange_links_block_save($delta = 0, $edit = array()) {
 function exchange_links_block_view($delta = 0) {
   $data = array();
   if($delta != 0) {
-    $block = db_select('exchange_links_blocks', 'blocks')
-    ->fields('blocks')
-    ->condition('bid', $delta, '=')
-    ->execute()
-    ->fetchObject();
+    $block = exchange_links_block_get($delta);
     $data['subject'] = NULL;
     $data['content'] = "Service $block->service </br>
       User $block->user </br>
@@ -139,6 +124,37 @@ function exchange_links_block_info() {
     $blocks[$record->bid]['cache'] = DRUPAL_NO_CACHE;
   }
   return $blocks;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter()
+ * place form admin/structure/block
+ */
+function exchange_links_form_block_admin_display_form_alter(&$form, $form_state) {
+  foreach($form['blocks'] as $key => $block) {
+    if($block['module']['#value'] == 'exchange_links') {
+      $form['blocks'][$key]['delete'] = array(
+        '#type' => 'link',
+        '#title' => t('delete'),
+        '#href' => 'admin/structure/block/manage/exchange_links/' . $block['delta']['#value'] . '/delete',
+      );
+    }
+  }
+}
+
+/**
+ * Returns information from database about a created block.
+ * @param bid
+ *   ID of the block to get information for.
+ * @return object of information stored in the database for this block.
+ * see exchange_links_schema()
+ */
+function exchange_links_block_get($bid) {
+  return db_select('exchange_links_blocks', 'blocks')
+    ->fields('blocks')
+    ->condition('bid', $bid, '=')
+    ->execute()
+    ->fetchObject();
 }
 
 /**
