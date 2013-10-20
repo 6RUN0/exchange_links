@@ -1,0 +1,6 @@
+name = Sape block
+;description =
+package = SEO
+core = 7.x
+dependencies[] = block
+version = "7.x-0.1"
