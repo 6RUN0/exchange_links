@@ -1,0 +1,28 @@
+<?php
+
+/**
+ * Implement hook_uninstall()
+ */
+function mainlink_block_uninstall() {
+  $transaction = db_transaction();
+  try {
+    db_delete('variable')
+      ->condition('name', "mainlink_block_%%", "LIKE")
+      ->execute();
+    db_delete('block')
+      ->condition('module', 'mainlink_block', '=')
+      ->execute();
+    db_delete('block_role')
+      ->condition('module', 'mainlink_block', '=')
+      ->execute();
+    db_delete('block_node_type')
+      ->condition('module', 'mainlink_block', '=')
+      ->execute();
+  }
+  catch (Exception $e) {
+    $transaction->rollback();
+    watchdog_exception('mainlink_block', $e);
+    throw $e;
+  }
+  cache_clear_all();
+}

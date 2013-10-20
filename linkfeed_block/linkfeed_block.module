@@ -1,0 +1,96 @@
+<?php
+
+/**
+ * Implements hook_block_info()
+ */
+function linkfeed_block_block_info() {
+  $blocks['linkfeed_block_links'] = array (
+    'info' => t('LinkFeed links block'),
+    'cache' => DRUPAL_NO_CACHE,
+  );
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_configure()
+ */
+function linkfeed_block_block_configure($delta = '') {
+  $form = array();
+  if ($delta == 'linkfeed_block_links') {
+    $form['linkfeed_block_user'] = array(
+      '#type' => 'textfield',
+      '#required' => TRUE,
+      '#title' => t('User name'),
+      '#description' => t('LinkFeed user name'),
+      '#default_value' => variable_get('linkfeed_block_user'),
+    );
+    $form['linkfeed_block_options'] = array(
+      '#type' => 'container',
+      '#tree' => TRUE,
+    );
+    $form['linkfeed_block_options']['verbose'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Verbose'),
+      '#description' => t('Show errors'),
+    );
+    $form['linkfeed_block_options']['force_show_code'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Force show code'),
+      '#description' => t('Always show check code'),
+    );
+    $default_values = variable_get('linkfeed_block_links_options');
+    if(is_array($default_values) && !empty($default_values)) {
+      foreach($form['linkfeed_block_options'] as $option => $value) {
+        if(is_array($value)) {
+          $form['linkfeed_block_options'][$option]['#default_value'] = $default_values[$option];
+        }
+      }
+    }
+  }
+  return $form;
+}
+
+/**
+ * Implements hook_block_save()
+ */
+function linkfeed_block_block_save($delta = '', $edit = array()) {
+  if($delta == 'linkfeed_block_links') {
+    variable_set('linkfeed_block_user', $edit['linkfeed_block_user']);
+    variable_set('linkfeed_block_links_options', $edit['linkfeed_block_options']);
+  }
+}
+
+/**
+ * Implements hook_block_view()
+ */
+function linkfeed_block_block_view($delta = '') {
+  $block = array();
+  if ($delta == 'linkfeed_block_links') {
+    $block['subject'] = NULL;
+    $user = variable_get('linkfeed_block_user');
+    if(!empty($user)) {
+      if (!defined('LINKFEED_USER')) {
+        define('LINKFEED_USER', $user);
+      }
+      $linkfeed_dir = DRUPAL_ROOT . '/' . LINKFEED_USER;
+      $linkfeed_php = "$linkfeed_dir/linkfeed.php";
+      if(file_prepare_directory($linkfeed_dir)) {
+        if(file_exists($linkfeed_php)) {
+          require_once($linkfeed_php);
+          $options = array();
+          $options['charset'] = 'utf-8';
+          $options += variable_get('linkfeed_block_links_options');
+          $linkfeed_links = new LinkfeedClient($options);
+          $block['content'] = $linkfeed_links->return_links();
+        }
+        else {
+          drupal_set_message(t("File '$linkfeed_php' not exist"), 'error');
+        }
+      }
+      else {
+        drupal_set_message(t("Directory '$linkfeed_dir' not exist or not writable"), 'error');
+      }
+    }
+  }
+  return $block;
+}

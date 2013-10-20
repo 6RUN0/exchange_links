@@ -1,0 +1,28 @@
+<?php
+
+/**
+ * Implement hook_uninstall()
+ */
+function linkfeed_block_uninstall() {
+  $transaction = db_transaction();
+  try {
+    db_delete('variable')
+      ->condition('name', "linkfeed_block_%%", "LIKE")
+      ->execute();
+    db_delete('block')
+      ->condition('module', 'linkfeed_block', '=')
+      ->execute();
+    db_delete('block_role')
+      ->condition('module', 'linkfeed_block', '=')
+      ->execute();
+    db_delete('block_node_type')
+      ->condition('module', 'linkfeed_block', '=')
+      ->execute();
+  }
+  catch (Exception $e) {
+    $transaction->rollback();
+    watchdog_exception('linkfeed_block', $e);
+    throw $e;
+  }
+  cache_clear_all();
+}
