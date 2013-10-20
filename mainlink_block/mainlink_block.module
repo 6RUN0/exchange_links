@@ -87,8 +87,9 @@ function mainlink_block_block_view($delta = '') {
       $options = array();
       $options['USERNAME'] = $user;
       $mainlink_dir = DRUPAL_ROOT . '/' . $options['USERNAME'];
+      $mainlink_dir_data = "$mainlink_dir/data";
       $mainlink_php = "$mainlink_dir/mainlink.php";
-      if(file_prepare_directory("$mainlink_dir") && file_prepare_directory("$mainlink_dir/data")) {
+      if(file_prepare_directory($mainlink_dir) && file_prepare_directory($mainlink_dir_data)) {
         if(file_exists($mainlink_php)) {
           require_once($mainlink_php);
           $options['charset'] = 'utf';
@@ -108,7 +109,7 @@ function mainlink_block_block_view($delta = '') {
         }
       }
       else {
-        drupal_set_message(t("Directory '$mainlink_dir', '$mainlink_dir/data' not exist or not writable"), 'error');
+        drupal_set_message(t("Directory '$mainlink_dir', '$mainlink_dir_data' not exist or not writable"), 'error');
       }
     }
   }

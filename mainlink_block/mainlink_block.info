@@ -1,6 +1,6 @@
 name = Mainlink block
 ;description =
-package = SEO
+package = Advertising
 core = 7.x
 dependencies[] = block
 version = "7.x-0.1"
